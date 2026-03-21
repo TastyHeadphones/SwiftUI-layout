@@ -1,0 +1,67 @@
+name: iOS Screenshots
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  capture:
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Project
+        run: xcodegen generate
+
+      - name: Create Artifacts Directory
+        run: mkdir -p artifacts/screenshots
+
+      - name: Capture Screenshots
+        run: |
+          set -euo pipefail
+          SIMULATOR_ID="$(xcrun simctl list devices available | awk -F '[()]' '/iPhone 16/ && /(Booted|Shutdown)/ {print $2; exit}')"
+          if [ -z "${SIMULATOR_ID}" ]; then
+            SIMULATOR_ID="$(xcrun simctl list devices available | awk -F '[()]' '/iPhone/ && /(Booted|Shutdown)/ {print $2; exit}')"
+          fi
+          if [ -z "${SIMULATOR_ID}" ]; then
+            echo "No available iPhone simulator found."
+            exit 1
+          fi
+
+          xcodebuild test \
+            -scheme LayoutShowcaseApp \
+            -project LayoutShowcaseApp.xcodeproj \
+            -destination "id=${SIMULATOR_ID}" \
+            -only-testing:LayoutShowcaseAppUITests/LayoutShowcaseAppUITests/testCaptureAllScreens
+
+          xcrun simctl boot "${SIMULATOR_ID}" || true
+          CONTAINER_PATH="$(xcrun simctl get_app_container "${SIMULATOR_ID}" com.example.LayoutShowcaseApp.UITests.xctrunner data)"
+          cp -R "${CONTAINER_PATH}/tmp/layout-showcase-screenshots/." artifacts/screenshots/
+          test -n "$(ls -A artifacts/screenshots)"
+
+      - name: Zip Screenshots
+        run: |
+          set -euo pipefail
+          cd artifacts
+          zip -r layout-screenshots.zip screenshots
+
+      - name: Upload Screenshot Zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: layout-screenshots
+          path: artifacts/layout-screenshots.zip
+          if-no-files-found: error
