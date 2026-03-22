@@ -5,7 +5,8 @@ final class LayoutShowcaseAppUITests: XCTestCase {
         ("AnyLayout Adaptation", "02-anylayout-adaptation"),
         ("Custom Flow Layout", "03-custom-flow-layout"),
         ("Anchor Preferences", "04-anchor-preferences"),
-        ("ViewThatFits Dashboard", "05-viewthatfits-dashboard")
+        ("ViewThatFits Dashboard", "05-viewthatfits-dashboard"),
+        ("Tab Bar Layout Lab", "06-tab-bar-layout-lab")
     ]
 
     override func setUpWithError() throws {

@@ -46,6 +46,16 @@ public struct LayoutExamplesHomeView: View {
                             symbol: "rectangle.2.swap"
                         )
                     }
+
+                    NavigationLink {
+                        TabBarLayoutShowcaseDemoView()
+                    } label: {
+                        DemoRow(
+                            title: "Tab Bar Layout Lab",
+                            subtitle: "Browse stacks, grids, adaptive, and overlay layouts in tabs.",
+                            symbol: "square.grid.2x2.fill"
+                        )
+                    }
                 }
             }
             .listStyle(.insetGrouped)
