@@ -7,33 +7,86 @@ public struct TabBarLayoutShowcaseDemoView: View {
     public init() {}
 
     public var body: some View {
+        Group {
+            if #available(iOS 26.1, *) {
+                modernTabView
+            } else {
+                legacyTabView
+            }
+        }
+        .navigationTitle("Tab Bar Layout Lab")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+private extension TabBarLayoutShowcaseDemoView {
+    var legacyTabView: some View {
         TabView(selection: $selectedTab) {
             StacksTab()
                 .tag(LayoutTab.stacks)
                 .tabItem {
-                    Label("Stacks", systemImage: "square.stack.3d.up")
+                    Label(LayoutTab.stacks.title, systemImage: LayoutTab.stacks.systemImage)
                 }
 
             GridTab()
                 .tag(LayoutTab.grids)
                 .tabItem {
-                    Label("Grids", systemImage: "square.grid.3x3")
+                    Label(LayoutTab.grids.title, systemImage: LayoutTab.grids.systemImage)
                 }
 
             AdaptiveTab()
                 .tag(LayoutTab.adaptive)
                 .tabItem {
-                    Label("Adaptive", systemImage: "rectangle.3.group")
+                    Label(LayoutTab.adaptive.title, systemImage: LayoutTab.adaptive.systemImage)
                 }
 
             OverlayTab()
                 .tag(LayoutTab.overlay)
                 .tabItem {
-                    Label("Overlay", systemImage: "rectangle.on.rectangle")
+                    Label(LayoutTab.overlay.title, systemImage: LayoutTab.overlay.systemImage)
                 }
         }
-        .navigationTitle("Tab Bar Layout Lab")
-        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    @available(iOS 26.1, *)
+    var modernTabView: some View {
+        TabView(selection: $selectedTab) {
+            Tab(
+                LayoutTab.stacks.titleKey,
+                systemImage: LayoutTab.stacks.systemImage,
+                value: LayoutTab.stacks
+            ) {
+                StacksTab()
+            }
+
+            Tab(
+                LayoutTab.grids.titleKey,
+                systemImage: LayoutTab.grids.systemImage,
+                value: LayoutTab.grids
+            ) {
+                GridTab()
+            }
+
+            Tab(
+                LayoutTab.adaptive.titleKey,
+                systemImage: LayoutTab.adaptive.systemImage,
+                value: LayoutTab.adaptive
+            ) {
+                AdaptiveTab()
+            }
+
+            Tab(
+                LayoutTab.overlay.titleKey,
+                systemImage: LayoutTab.overlay.systemImage,
+                value: LayoutTab.overlay
+            ) {
+                OverlayTab()
+            }
+        }
+        .tabBarMinimizeBehavior(.onScrollDown)
+        .tabViewBottomAccessory(isEnabled: true) {
+            TabBarStatusAccessory(selectedTab: selectedTab)
+        }
     }
 }
 
@@ -42,6 +95,87 @@ private enum LayoutTab: String {
     case grids
     case adaptive
     case overlay
+
+    var title: String {
+        switch self {
+        case .stacks:
+            return "Stacks"
+        case .grids:
+            return "Grids"
+        case .adaptive:
+            return "Adaptive"
+        case .overlay:
+            return "Overlay"
+        }
+    }
+
+    var titleKey: LocalizedStringKey {
+        LocalizedStringKey(title)
+    }
+
+    var systemImage: String {
+        switch self {
+        case .stacks:
+            return "square.stack.3d.up"
+        case .grids:
+            return "square.grid.3x3"
+        case .adaptive:
+            return "rectangle.3.group"
+        case .overlay:
+            return "rectangle.on.rectangle"
+        }
+    }
+}
+
+@available(iOS 26.1, *)
+private struct TabBarStatusAccessory: View {
+    @Environment(\.tabViewBottomAccessoryPlacement) private var placement
+    let selectedTab: LayoutTab
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: selectedTab.systemImage)
+                .imageScale(.small)
+                .foregroundStyle(.secondary)
+
+            Text("Now viewing \(selectedTab.title)")
+                .font(.caption.weight(.semibold))
+
+            Spacer(minLength: 0)
+
+            Text(placementText)
+                .font(.caption2.weight(.medium))
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 9)
+        .background(.regularMaterial, in: Capsule())
+        .padding(.horizontal, horizontalPadding)
+    }
+
+    private var placementText: String {
+        switch placement {
+        case .some(.inline):
+            return "Inline"
+        case .some(.expanded):
+            return "Expanded"
+        case .none:
+            return "Accessory"
+        @unknown default:
+            return "Accessory"
+        }
+    }
+
+    private var horizontalPadding: CGFloat {
+        switch placement {
+        case .some(.inline):
+            return 12
+        case .some(.expanded), .none:
+            return 20
+        @unknown default:
+            return 20
+        }
+    }
 }
 
 private struct StacksTab: View {
